@@ -66,19 +66,60 @@ specnumber(FishSurvey[4:148], FishSurvey$Alphalist)
 
 FishSurvey$AlphaBZ <- 0
 FishSurvey$AlphaBZ[1:7] <- 1
-FishSurvey$AlphaBZ[90:96] <- 1
-FishSurvey$AlphaBZ[206:211] <- 1
-
+FishSurvey$AlphaBZ[91:97] <- 1
+FishSurvey$AlphaBZ[207:212] <- 1
+FishSurvey$AlphaBZ <- as.character(FishSurvey$AlphaBZ)
 
 
 #Now I have selected seven estuaries from the east and south coasts, and six from the west coast. How many species have I protected? 
 
 specnumber(FishSurvey[4:148], FishSurvey$AlphaBZ)
 0   1 
-123 119
+120 122
 
-#I've had diminishing returns it seems, only three more species are protected
+#I've had diminishing returns it seems, only four more species are protected
 
+#So now I can plot it again: 
+
+ggplot(FishSurvey, aes(kmEast,Alpha)) + 
+  geom_point(aes(colour = AlphaBZ)) +
+  scale_color_manual(name = "AlphaBZ",
+                     values = c("0" = "blue",
+                                "1" = "red"),
+                      labels = c("Unprotected","Protected"))
+
+#Now we need a list of the most diverse estuaries from each bioregion 
+AlphaBZlist <- FishSurvey[FishSurvey$AlphaBZ == "1",1]
+AlphaBZlist
+
+#What's the problem of choosing the most diverse estuaries? Well it's probably in an overlap zone between multiple biogeographic zones 
+#So we may be preserving marginal habitat rather than core habitat which is poor conservation
+#One way to circumvent this is to include an abundance index to account for their core habitats. 
+#So we need to calculate geographic range and the centre of their distribution 
+
+ggplot(FishSurvey, aes(kmEast,Dusky.kob)) + 
+  geom_point(aes(colour = AlphaBZ)) +
+  scale_color_manual(name = "AlphaBZ",
+                     values = c("0" = "blue",
+                                "1" = "red"),
+                     labels = c("Unprotected","Protected"))
+#Let's determine the eastern and western boundaries of each species 
+
+WL <- array(0,c(145))
+WL
+#We've made a blank vector which we will eventually fill
+
+EL <- array(0,c(145))
+EL
+#Another blank vector of length 145
+
+range <- array(0,c(145))
+range
+#Another vector for range 
+
+ab <- array(0,c(145))
+ab
+#And a vector of abundance 
 
 #Shall we try Shannon diversity? 
 
