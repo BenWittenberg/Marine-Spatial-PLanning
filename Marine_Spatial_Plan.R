@@ -119,7 +119,103 @@ range
 
 ab <- array(0,c(145))
 ab
+
+centre <- array(0,c(145))
+centre
+
+max <- 0
 #And a vector of abundance 
+#Now I need to order by kmEast
+ED <- FishSurvey[order(FishSurvey$kmWest),]
+view(ED)
+#So now we should run a loop to speed things up
+for(i in 1:145){ #species loop
+  for(j in 1:232){ #estuaries loop
+    if(ED[j,i + 3] > 0) {EL[i] <- ED[j,2]} 
+  }
+
+  for(j in 232:1){ #estuaries loop
+    if(ED[j,i + 3] > 0) {WL[i] <- ED[j,2]}
+  }
+}
+  for(k in 1:145){
+    range[i] <- (EL[i]-WL[i])
+  }
+  for(i in 1:145){#species loop
+    max <- 0
+    for(j in 1:232){ #estuary loop
+      if(ED[j,i+3]>max){
+        centre[i] <- ED[j,2]
+        max <- ED[j,i+3]} 
+    }
+  }
+  
+
+    
+
+
+#Now let's check what we've put in our Eastern Limit vector
+Wlim <- EL 
+Elim <- WL
+#I did this because my EL was actually my Western Limit and vice versa 
+#Seems to have worked
+range
+
+#Now we need to calculate the centre: 
+centre
+
+#Now can I plot a frequency histogram of centre ranges 
+hist(centre, breaks = 232)
+?hist
+#Noticeable right-skew 
+#And I need to know which 20 estuaries have the greatest frequency 
+
+#How to list the estuaries with the most modes? 
+
+levels(as.factor(centre))
+mode_table <- table(as.factor(centre))
+
+#Hey that seems to have worked! 
+class(mode_table)
+#Now I coerce to a data frame so I can roder it again
+mode_df <- data.frame(rbind(mode_table))
+class(mode_df)
+View(mode_df)
+
+
+library(tidyverse)
+mode_df %>%
+  pivot_longer(cols = starts_with("X"), names_to = "kmEast", values_to = "Mode frequency") -> mode_df
+#Now I've made it a long dataset and saved them all as categorical variables 
+
+mode_df <- mode_df[order(-mode_df$`Mode frequency`),]
+#Now we have ordered our list so that we have the estuaries that represent the mode of the most species' distributions on top. I.e. the estuary at 267kmEast is the most abundant estuary for the most species (12 species have their peaks here). 
+
+#so if we want the top twenty estuaries all we'd have to do is pick 
+
+mod_est <- mode_df[1:20,]
+#But I think this will quickly clog up my workspace 
+
+
+
+#FishSurvey <- FishSurvey[order(FishSurvey$BZ, -FishSurvey$Alpha),]
+#Okay so there are 68 estuaries that are the most abundant for at least one species 
+
+
+
+
+
+
+
+
+
+
+
+#What is the abundance for each species? 
+ab
+#Now I have a vector of abundances 
+
+#That does not look right because each species should have a non-zero total 
 
 #Shall we try Shannon diversity? 
 
