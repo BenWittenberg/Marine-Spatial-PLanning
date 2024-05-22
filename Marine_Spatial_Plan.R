@@ -229,35 +229,152 @@ specnumber(ED[4:148], ED$modelist)
 107 127
 #So we're protecting quite a few more using this method 
 127/145
-#About 88% of all the fish  
+#About 88% of all the fish 
 
 
+#Now we should do an ordination to determine species composition 
+#We'll do this using a dendrogram 
+#We've loaded vegan with library(vegan) 
+
+ED <- subset(ED, Alpha > 0)
+#This removes all the estuaries where there are now species at all
+nrow(ED)
+
+ED_deco <- decostand(ED[,c(4:148)], method = "total")
+#This noramlises the data by the total so that we have the proportions of the species for each estuary so we have comparable data rather than raw numbers 
+
+#Next step: we need to use Bray-Curtis to calculate dissimilarity 
+
+ED_dist <- vegdist(ED_deco,method = "bray")
+#We're calculating Bray-Curtis dissimilarity 
+
+ED_cluster <- hclust(ED_dist, method = "average")
+plot(ED_cluster, hang = -1, ylab = "Dissimilarity")
+
+slice <- cutree(ED_cluster, h = 0.8) #this is the dissimilarity value at which we're cutting
+slice
+#Seems we've divided this into ten groups - we woudl then have two protected estuaries per group
+
+#Now we put these into the original data frame 
+
+ED$cut80 <- slice
+
+ED$cut80
+#This has classed each estuary into different community types, and there are ten types (although there is only once example of 10, what's the bet it's the Orange river)
+
+#Now we need to order our data by cut80 and then by Alpha 
+ED <- ED[order(ED$cut80,-ED$Alpha),]
+
+cutlist <- c("Kosi","Mngazana","Kwelera","Mlalazi","Matigulu/Nyoni","Mzimkulu","Bushmans","Great Kei","Nenga","Bakens","Kaaimans","Slang","Kaapsedrif","Olifants","Diep","Storms","Elsies","St Lucia","Orange","Kariega")
+#I've also randomly added some others that do not occur in the cutlist but do coincide in the AlphaBZ list and the Modelist (the Orange, St Lucia and Kariega)
+#I have also exchanged the Bree river for the diep river because that appears in the AlphaBZ list
+ED[ED$cut80 == "8",1]
+AlphaBZlist
+ED[ED$modelist == "1",1]
+
+library(dplyr)
+library(tidyverse)
+ED <- ED %>%
+  mutate(cutlist = ifelse(ED$Estuary %in% cutlist, 1, 0))
+ED$cutlist <- as.character(ED$cutlist)
 
 
+#So how many species are we protecting? 
+specnumber(ED[4:148], ED$cutlist)
+0   1 
+123 112
+#Not doing so good 
+#Aaaand suddenly my code is bugged out, why? It was literally working a few seconds ago 
 
 
+#Now the issue is we are protecting too many of the same species 
+Fish <- ED
+Fish2 <- ED
 
+Fish$complist <- 0
+
+
+Fish[1,154] <- 1
+#Now we're going to make a loop for this 
+for(j in 1:20){
+  Fish <- Fish[order(-Fish$Alpha),]
+  Fish$complist[1] <- 1
+  for(i in 1:145){
+  if(Fish[1,i + 3]>0){Fish[,i + 3]<- 0}
+  
+  }
+  Fish$Alpha <- specnumber(Fish[,4:148])
+}
+#This is basically ensuring that we preserve as great a variety of species as possible: it makes sure we aren't protecting the same species over and over again 
+Fish$complist
+
+Fish <- Fish[order(-Fish$complist),]
+Fish$kmEast <- (2947 - Fish$kmWest)
+Fish$complist <- as.character(Fish$complist)
+
+ED <- ED[order(ED$kmWest),]
+Fish <- Fish[order(Fish$kmWest),]
+ED$complist <- Fish$complist
+
+ED$kmEast <- (2947 - ED$kmWest)
+
+ggplot(ED, aes(kmEast,Alpha)) + 
+  geom_point(aes(colour = complist)) +
+  scale_color_manual(name = "Turnover",
+                     values = c("0" = "blue",
+                                "1" = "red"),
+                     labels = c("Unprotected","Protected"))
+
+specnumber(ED[4:148], ED$complist)
+0   1 
+109 135
+#This is the best method so far 
+135/145
+#We're protecting 93% of the fish species 
+#But the problem is we are probably still protecting marginal habitat 
+
+complist <- ED[ED$complist == "1",1] 
+complist
+
+#I'm curious as to how many estuaries we would need to protect to have full (145 species) protection
 
 
 #What is the abundance for each species? 
-ab
-#Now I have a vector of abundances 
-
-#That does not look right because each species should have a non-zero total 
-
+# ab
+# #Now I have a vector of abundances 
+# 
+# #That does not look right because each species should have a non-zero total 
+# 
 #Shall we try Shannon diversity? 
-
-Shannon <- diversity(FishSurvey[,4:148])
+# 
+Shannon <- diversity(ED[,4:148])
 Shannon
+ 
+ED$Shannon <- Shannon
 
-FishSurvey$Shannon <- Shannon
+ggplot(ED, aes(kmEast,Shannon)) + 
+  geom_point(aes(colour = complist)) +
+  scale_color_manual(name = "Turnover",
+                     values = c("0" = "blue",
+                                "1" = "red"),
+                     labels = c("Unprotected","Protected"))
 
+
+
+# 
 #Now let's try for some Beta-diversity: just for the hell of it 
-
-Simpson <- diversity(FishSurvey[,4:148],"simpson")
+# 
+Simpson <- diversity(ED[,4:148],"simpson")
 Simpson
+# 
+ED$Simpson <- Simpson
+ED$Invert.Simpson <- 1- Simpson
 
-FishSurvey$Simpson <- Simpson
-
-#Now for Simpson's diversity, a low number = high diversity but a high number = low diversity, so should I invert it by subtracting it from 1? 
+ggplot(ED, aes(kmEast,Simpson)) + 
+  geom_point(aes(colour = complist)) +
+  scale_color_manual(name = "Turnover",
+                     values = c("0" = "blue",
+                                "1" = "red"),
+                     labels = c("Unprotected","Protected"))
+# #Now for Simpson's diversity, a low number = high diversity but a high number = low diversity, so should I invert it by subtracting it from 1? 
 
