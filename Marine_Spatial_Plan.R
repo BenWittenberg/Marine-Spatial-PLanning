@@ -19,7 +19,7 @@ Alpha
 FishSurvey$Alpha <- Alpha
 
 #Let's order by the 20 most diverse estuaries: 
-FishSurvey <- FishSurvey[order(FishSurvey$BZ, -FishSurvey$Alpha),]
+FishSurvey <- FishSurvey[order(FishSurvey$BZ,-FishSurvey$Alpha),]
 FishSurvey[1:20,1]
 #This gives us the estuaries with the highest species counts 
 #Mlalazi is the most diverse 
@@ -191,17 +191,45 @@ mode_df %>%
 mode_df <- mode_df[order(-mode_df$`Mode frequency`),]
 #Now we have ordered our list so that we have the estuaries that represent the mode of the most species' distributions on top. I.e. the estuary at 267kmEast is the most abundant estuary for the most species (12 species have their peaks here). 
 
+#Now we need a new variable called Modelist (and I'll do this to the FishSurvey and ED dataframes)
+
+
+
 #so if we want the top twenty estuaries all we'd have to do is pick 
 
 mod_est <- mode_df[1:20,]
 #But I think this will quickly clog up my workspace 
 
+#I have successfully listened to Colin and screwed up as a result 
+#Ed is the untransformed data 
+## add column modelist (top 20 estuaries by middle of ranges)
+ED$modelist <- 0
+# List of locations to set modelist to 1
+locations <- c("St Lucia", "Mlalazi", "Matigulu/Nyoni", "Knysna", "Kariega", 
+               "Bushmans", "Kosi", "Mfolozi/Msunduzi", "Manzimtoti", "Mkomazi", 
+               "Kwelera", "Orange", "Mtentu", "Mngazana", "Ngqusi/Inxaxo", 
+               "Great Kei", "Great Fish", "Zinkwasi", "Mzamba", "Msikaba")
 
+ED <- ED %>%
+  mutate(modelist = ifelse(ED$Estuary %in% locations, 1, 0))
+ED$modelist <- as.character(ED$modelist)
 
-#FishSurvey <- FishSurvey[order(FishSurvey$BZ, -FishSurvey$Alpha),]
+#Now we plot this bad boy 
+ggplot(ED, aes(kmEast,Alpha)) + 
+  geom_point(aes(colour = modelist)) +
+  scale_color_manual(name = "Modelist",
+                     values = c("0" = "blue",
+                                "1" = "red"),
+                     labels = c("Unprotected","Protected"))
 #Okay so there are 68 estuaries that are the most abundant for at least one species 
 
-
+#Now I should figure out how many species are protected in this new form
+specnumber(ED[4:148], ED$modelist)
+0   1 
+107 127
+#So we're protecting quite a few more using this method 
+127/145
+#About 88% of all the fish  
 
 
 
