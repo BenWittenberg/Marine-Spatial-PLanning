@@ -76,7 +76,7 @@ FishSurvey$AlphaBZ <- as.character(FishSurvey$AlphaBZ)
 specnumber(FishSurvey[4:148], FishSurvey$AlphaBZ)
 0   1 
 120 122
-
+122/145
 #I've had diminishing returns it seems, only four more species are protected
 
 #So now I can plot it again: 
@@ -274,17 +274,60 @@ ED[ED$modelist == "1",1]
 
 library(dplyr)
 library(tidyverse)
-ED <- ED %>%
-  mutate(cutlist = ifelse(ED$Estuary %in% cutlist, 1, 0))
-ED$cutlist <- as.character(ED$cutlist)
+# ED <- ED %>%
+#   mutate(cutlist = ifelse(ED$Estuary %in% cutlist, 1, 0))
+# ED$cutlist <- as.character(ED$cutlist)
 
+#Okay let's do this manually with the altered cutlist 
+
+
+
+
+ED[ED$Estuary == "Kosi",153] <- 1
+ED[ED$Estuary == "Mngazana",153] <- 1
+ED[ED$Estuary == "Kwelera",153] <- 1
+ED[ED$Estuary == "Mlalazi",153] <- 1
+ED[ED$Estuary == "Matigulu/Nyoni",153] <- 1
+ED[ED$Estuary == "Mzimkulu",153] <- 1
+ED[ED$Estuary == "Bushmans",153] <- 1
+ED[ED$Estuary == "Great Kei",153] <- 1
+ED[ED$Estuary == "Nenga",153] <- 1
+ED[ED$Estuary == "Bakens",153] <- 1
+ED[ED$Estuary == "Kaaimans",153] <- 1
+ED[ED$Estuary == "Slang",153] <- 1
+ED[ED$Estuary == "Kaapsedrif",153] <- 1
+ED[ED$Estuary == "Olifants",153] <- 1
+ED[ED$Estuary == "Diep",153] <- 1
+ED[ED$Estuary == "Storms",153] <- 1
+ED[ED$Estuary == "Elsies",153] <- 1
+ED[ED$Estuary == "St Lucia",153] <- 1
+ED[ED$Estuary == "Orange",153] <- 1
+ED[ED$Estuary == "Kariega",153] <- 1
+
+#Make it a character
+ED$cut80 <- as.character(ED$cut80)
 
 #So how many species are we protecting? 
+library(vegan)
 specnumber(ED[4:148], ED$cutlist)
 0   1 
-123 112
+121 110 
 #Not doing so good 
-#Aaaand suddenly my code is bugged out, why? It was literally working a few seconds ago 
+110/145
+145*0.78
+#Is there a regional bias in the community divisions?
+ggplot(ED, aes(kmEast,Alpha)) + 
+  geom_point(aes(colour = cut80)) 
+
+
+
+
+lm <- lm(cut80 ~ kmEast, data = ED) 
+summary(lm)
+
+#As it goes Westwards the number of community zones decreases 
+
+
 
 
 #Now the issue is we are protecting too many of the same species 
@@ -372,9 +415,115 @@ ED$Invert.Simpson <- 1- Simpson
 
 ggplot(ED, aes(kmEast,Simpson)) + 
   geom_point(aes(colour = complist)) +
-  scale_color_manual(name = "Turnover",
+  scale_color_manual(name = "Complementary",
                      values = c("0" = "blue",
                                 "1" = "red"),
                      labels = c("Unprotected","Protected"))
 # #Now for Simpson's diversity, a low number = high diversity but a high number = low diversity, so should I invert it by subtracting it from 1? 
 
+
+#Now let's read in the list of protected estuaries 
+Protected <- read.csv("Protected_estuaries.csv")
+
+Protected
+
+#Now make a new variable in the ED dataframe 
+
+ED$current <- 0
+
+ED <- ED %>%
+   mutate(current = ifelse(ED$Estuary %in% Protected[,1], 1, 0))
+ ED$current <- as.character(ED$current)
+ 
+#ED2 is the untampered data at this point 
+ 
+ED2$alpha <- specnumber[,4:148]
+
+Alpha <- specnumber(ED2[,4:148])
+Alpha
+
+ED2$Alpha <- Alpha
+
+complist
+
+127/145
+ 
+#Now plot this: 
+ ggplot(ED, aes(kmEast,Alpha)) + 
+   geom_point(aes(colour = current)) +
+   scale_color_manual(name = "Current status",
+                      values = c("0" = "blue",
+                                 "1" = "red"),
+                      labels = c("Unprotected","Protected"))
+ 
+#So how many species are now protected? 
+
+specnumber(ED[4:148], ED$current)
+0   1 
+127 106
+
+#So at the moment we're doing pretty poorly (only protecting 73%)
+106/145
+
+#Let's try the brute force method: basically a random selection with a loooot of permutations
+
+
+ED2 <- read.csv("EstuaryFishSurveyData.csv")
+
+ED3
+# ED2$random <- 0
+# ED2$dummy <- runif(n=232, min=1, max=232)
+
+#Make a column for Alpha 
+Alpha <- specnumber(ED2[,4:148])
+Alpha
+
+ED2$Alpha <- Alpha
+
+randlist <- array(0,c(20))
+randlist <- as.character(randlist)
+class(randlist)
+div <- 0
+MaxSpp <- 0 
+for(j in 1:1000000){
+  div = 0
+  ED3 <- ED2[sample(1:nrow(ED2),20,replace = FALSE),]
+  for(i in 1:145){
+    if(sum(ED3[,i+3])>0){div <- div + 1}
+  }
+    if(div > MaxSpp){
+      MaxSpp <- div
+      randlist <- ED3[1:20,1]
+    }
+    }
+  MaxSpp/145 
+  randlist
+    
+#First permutation protects 58%
+  #Permutation of 100 000 protects 75% 
+  #Permutation of 500 000 protects only 76%
+  #Permutation of 1 mill prpotected 78%
+  #Now the best randlist will be the randlist with the highest number on the end 
+Randlist4 <- randlist
+
+
+
+ 
+#After this I'm going to use the estuaries that occur in the highest number of lists (top 20 that occur in the most lists)
+#Then add five to the list of existing MPAs, to best maximize the 
+
+
+#Let me see how many estuaries are in each Biogeographic zone #Remember ED2 is the untransformed data
+ED2[ED2$BZ == "W",1]
+#26 in the Western region
+#What proportion are we protecting? 
+6/26
+#23%
+ED2[ED2$BZ == "S",1]
+#116 in the South
+7/116
+#Only 6%
+ED2[ED2$BZ == "E",1]
+#90 in the East
+7/90
+#Only 8%
