@@ -200,7 +200,6 @@ mode_df <- mode_df[order(-mode_df$`Mode frequency`),]
 mod_est <- mode_df[1:20,]
 #But I think this will quickly clog up my workspace 
 
-#I have successfully listened to Colin and screwed up as a result 
 #Ed is the untransformed data 
 ## add column modelist (top 20 estuaries by middle of ranges)
 ED$modelist <- 0
@@ -337,9 +336,9 @@ Fish2 <- ED
 Fish$complist <- 0
 
 
-Fish[1,154] <- 1
+Fish[1,156] <- 1
 #Now we're going to make a loop for this 
-for(j in 1:20){
+for(j in 1:40){
   Fish <- Fish[order(-Fish$Alpha),]
   Fish$complist[1] <- 1
   for(i in 1:145){
@@ -374,7 +373,12 @@ specnumber(ED[4:148], ED$complist)
 #This is the best method so far 
 135/145
 #We're protecting 93% of the fish species 
-#But the problem is we are probably still protecting marginal habitat 
+#But the problem is we are probably still protecting marginal habitat
+
+#Let's see how many estuaries we need to protect to boost the diversity count 
+specnumber(ED[4:148], ED$complist)
+0   1 
+99 145
 
 complist <- ED[ED$complist == "1",1] 
 complist
@@ -527,3 +531,269 @@ ED2[ED2$BZ == "E",1]
 #90 in the East
 7/90
 #Only 8%
+127/145
+
+
+#Let's plot the data from the brute force method 
+
+ED2$brute <- 0
+
+ED2 <- ED2 %>%
+  mutate(brute = ifelse(ED2$Estuary %in% Randlist4, 1, 0))
+ED2$brute <- as.character(ED2$brute)
+
+#Now plot this 
+ED2$kmEast <- (2947 - ED2$kmWest)
+ggplot(ED2, aes(kmEast,Alpha)) + 
+  geom_point(aes(colour = brute)) +
+  scale_color_manual(name = "Random",
+                     values = c("0" = "blue",
+                                "1" = "red"),
+                     labels = c("Unprotected","Protected"))
+
+
+#Touching up section
+
+#Plot based off alpha only
+FishSurvey <- read.csv("EstuaryFishSurveyData.csv")
+FishSurvey[is.na(FishSurvey)] = 0
+FishSurvey$Alpha <- specnumber(FishSurvey[,4:145])
+
+FishSurvey <- FishSurvey[order(-FishSurvey$Alpha),]
+
+FishSurvey$kmEast <- (2947 - FishSurvey$kmWest)
+Alphalist <- FishSurvey[1:20,1]
+Alphalist
+
+FishSurvey$Alphalist <- 0
+
+FishSurvey$Alphalist[1:20] <- 1
+
+FishSurvey <- FishSurvey %>%
+  mutate(Alphalist = ifelse(FishSurvey$Estuary %in% Alphalist, 1, 0))
+FishSurvey$Alphalist <- as.character(FishSurvey$Alphalist)
+
+
+
+ggplot(FishSurvey, aes(kmEast,Alpha)) + 
+  geom_point(aes(colour = Alphalist)) +
+  scale_color_manual(name = "Alpha list",
+                     values = c("0" = "blue",
+                                "1" = "red"),
+                     labels = c("Unprotected","Protected"))
+
+#Now I need to replot my cutlist 
+cutlist
+FishSurvey$cutlist <- 0
+
+# FishSurvey <- FishSurvey %>%
+#   mutate(cutlist = ifelse(FishSurvey$Estuary %in% cutlist, 1, 0))
+# FishSurvey$cutlist <- as.character(FishSurvey$cutlist)
+
+#Super weird that it doesn't do this, but only with the cutlist 
+
+ED <- FishSurvey
+
+ED[ED$Estuary == "Kosi",152] <- 1
+ED[ED$Estuary == "Mngazana",152] <- 1
+ED[ED$Estuary == "Kwelera",152] <- 1
+ED[ED$Estuary == "Mlalazi",152] <- 1
+ED[ED$Estuary == "Matigulu/Nyoni",152] <- 1
+ED[ED$Estuary == "Mzimkulu",152] <- 1
+ED[ED$Estuary == "Bushmans",152] <- 1
+ED[ED$Estuary == "Great Kei",152] <- 1
+ED[ED$Estuary == "Nenga",152] <- 1
+ED[ED$Estuary == "Bakens",152] <- 1
+ED[ED$Estuary == "Kaaimans",152] <- 1
+ED[ED$Estuary == "Slang",152] <- 1
+ED[ED$Estuary == "Kaapsedrif",152] <- 1
+ED[ED$Estuary == "Olifants",152] <- 1
+ED[ED$Estuary == "Diep",152] <- 1
+ED[ED$Estuary == "Storms",152] <- 1
+ED[ED$Estuary == "Elsies",152] <- 1
+ED[ED$Estuary == "St Lucia",152] <- 1
+ED[ED$Estuary == "Orange",152] <- 1
+ED[ED$Estuary == "Kariega",152] <- 1
+ED$cutlist <- as.character(ED$cutlist)
+
+
+
+
+#Now plot this bad boiii
+ggplot(ED, aes(kmEast,Alpha)) + 
+  geom_point(aes(colour = randlist)) +
+  scale_color_manual(name = "Brute force",
+                     values = c("0" = "blue",
+                                "1" = "red"),
+                     labels = c("Unprotected","Protected")) +
+  labs(x = "Km East", y = "Alpha diversity")+
+  theme(
+    panel.grid.major = element_blank(),              # Remove major gridlines
+    panel.grid.minor = element_blank(),              # Remove minor gridlines
+    panel.background = element_rect(fill = "white"), # Set panel background to white
+    plot.background = element_rect(fill = "white"),  # Set plot background to white
+    plot.title = element_blank(),                    # Remove plot title
+    axis.ticks.length = unit(-0.2, "cm"),            # Make tick marks on the inside
+    axis.ticks = element_line(color = "black"),      # Ensure ticks are visible
+    axis.line = element_line(color = "black"))       # Add axis lines
+
+#Now I'm doing for alphaBZ
+ED$AlphaBZlist <- 0
+
+AlphaBZlist
+
+# ED <- ED %>%
+#   mutate(Alphalist = ifelse(ED$Estuary %in% AlphaBZlist, 1, 0))
+# ED$AlphaBZlist <- as.character(ED$AlphaBZlist)
+
+
+#Didn't like that for some reason 
+ED[ED$Estuary == "Mlalazi",153] <- 1
+ED[ED$Estuary == "Matigulu/Nyoni",153] <- 1
+ED[ED$Estuary == "St Lucia",153] <- 1
+ED[ED$Estuary == "Mngazana",153] <- 1
+ED[ED$Estuary == "Mntafufu",153] <- 1
+ED[ED$Estuary == "Mzamba",153] <- 1
+ED[ED$Estuary == "Mtamvuna",153] <- 1
+ED[ED$Estuary == "Kariega",153] <- 1
+ED[ED$Estuary == "Kwelera",153] <- 1
+ED[ED$Estuary == "Knysna",153] <- 1
+ED[ED$Estuary == "Tyolomnqa",153] <- 1
+ED[ED$Estuary == "Kowie",153] <- 1
+ED[ED$Estuary == "Gqunube",153] <- 1
+ED[ED$Estuary == "Bushmans",153] <- 1
+ED[ED$Estuary == "Berg",153] <- 1
+ED[ED$Estuary == "Orange",153] <- 1
+ED[ED$Estuary == "Olifants",153] <- 1
+ED[ED$Estuary == "Diep",153] <- 1
+ED[ED$Estuary == "Verlore",153] <- 1
+ED[ED$Estuary == "Wildevoel",153] <- 1
+ED$AlphaBZlist <- as.character(ED$AlphaBZlist)
+
+
+Protected[,1] 
+
+ED$protected <- 0
+ ED <- ED %>%
+   mutate(protected = ifelse(ED$Estuary %in% Protected[,1], 1, 0))
+ED$protected <- as.character(ED$protected)
+
+
+#Now we touch up the modelist 
+ED$modelist <- 0
+modelist <- c("St Lucia", "Mlalazi", "Matigulu/Nyoni", "Knysna", "Kariega", 
+               "Bushmans", "Kosi", "Mfolozi/Msunduzi", "Manzimtoti", "Mkomazi", 
+               "Kwelera", "Orange", "Mtentu", "Mngazana", "Ngqusi/Inxaxo", 
+               "Great Kei", "Great Fish", "Zinkwasi", "Mzamba", "Msikaba")
+
+
+# ED <- ED %>%
+#   mutate(modelist = ifelse(ED$Estuary %in% modelist, 1, 0))
+# ED$modelist <- as.character(ED$modelist)
+
+
+#Again, didn't like that so we go manual 
+#FOR MODELIST
+
+ED[ED$Estuary == "St Lucia",155] <- 1
+ED[ED$Estuary == "Mlalazi",155] <- 1
+ED[ED$Estuary == "Matigulu/Nyoni",155] <- 1
+ED[ED$Estuary == "Knysna",155] <- 1
+ED[ED$Estuary == "Kariega",155] <- 1
+ED[ED$Estuary == "Bushmans",155] <- 1
+ED[ED$Estuary == "Kosi",155] <- 1
+ED[ED$Estuary == "Mfolozi/Msunduzi",155] <- 1
+ED[ED$Estuary == "Manzimtoti",155] <- 1
+ED[ED$Estuary == "Mkomazi",155] <- 1
+ED[ED$Estuary == "Kwelera",155] <- 1
+ED[ED$Estuary == "Orange",155] <- 1
+ED[ED$Estuary == "Mtentu",155] <- 1
+ED[ED$Estuary == "Mngazana",155] <- 1
+ED[ED$Estuary == "Ngqusi/Inxaxo",155] <- 1
+ED[ED$Estuary == "Great Kei",155] <- 1
+ED[ED$Estuary == "Great Fish",155] <- 1
+ED[ED$Estuary == "Zinkwasi",155] <- 1
+ED[ED$Estuary == "Mzamba",155] <- 1
+ED[ED$Estuary == "Msikaba",155] <- 1
+ED$modelist <- as.character(ED$modelist)
+
+
+#Boom now complist 
+
+complist
+
+ED$complist <- 0
+ED <- ED %>%
+   mutate(complist = ifelse(ED$Estuary %in% complist, 1, 0)) 
+ED$complist <- as.character(ED$complist)
+
+#Now back to manual method 
+#FOR COMPLEMENTARY METHOD
+complist
+ED[ED$Estuary == "Kosi",156] <- 1
+ED[ED$Estuary == "St Lucia",156] <- 1
+ED[ED$Estuary == "Mlalazi",156] <- 1
+ED[ED$Estuary == "Matigulu/Nyoni",156] <- 1
+ED[ED$Estuary == "Manzimtoti",156] <- 1
+ED[ED$Estuary == "Mkomazi",156] <- 1
+ED[ED$Estuary == "Mbizana",156] <- 1
+ED[ED$Estuary == "Mtamvuna",156] <- 1
+ED[ED$Estuary == "Mtentu",156] <- 1
+ED[ED$Estuary == "Mngazana",156] <- 1
+ED[ED$Estuary == "Qora",156] <- 1
+ED[ED$Estuary == "Kwelera",156] <- 1
+ED[ED$Estuary == "Tyolomnqa",156] <- 1
+ED[ED$Estuary == "Great Fish",156] <- 1
+ED[ED$Estuary == "Kariega",156] <- 1
+ED[ED$Estuary == "Bushmans",156] <- 1
+ED[ED$Estuary == "Knysna",156] <- 1
+ED[ED$Estuary == "Bot",156] <- 1
+ED[ED$Estuary == "Berg",156] <- 1
+ED[ED$Estuary == "Orange",156] <- 1
+ED$complist <- as.character(ED$complist)
+
+
+
+
+
+#Boom now randlist 
+
+Randlist4
+
+#Will probably have to do this the manual way 
+
+ED$randlist <- 0
+
+ED[ED$Estuary == "Mpande",157] <- 1
+ED[ED$Estuary == "Berg",157] <- 1
+ED[ED$Estuary == "Jujura",157] <- 1
+ED[ED$Estuary == "Sundays",157] <- 1
+ED[ED$Estuary == "Matigulu/Nyoni",157] <- 1
+ED[ED$Estuary == "Manzimtoti",157] <- 1
+ED[ED$Estuary == "Knysna",157] <- 1
+ED[ED$Estuary == "Ngqwara",157] <- 1
+ED[ED$Estuary == "Xora",157] <- 1
+ED[ED$Estuary == "Lovu",157] <- 1
+ED[ED$Estuary == "Ntlupeni",157] <- 1
+ED[ED$Estuary == "Mgwetyana",157] <- 1
+ED[ED$Estuary == "Hickmans",157] <- 1
+ED[ED$Estuary == "Orange",157] <- 1
+ED[ED$Estuary == "Blind",157] <- 1
+ED[ED$Estuary == "Ntlonyane",157] <- 1
+ED[ED$Estuary == "Mtamvuna",157] <- 1
+ED[ED$Estuary == "Sout R.",157] <- 1
+ED[ED$Estuary == "St Lucia",157] <- 1
+ED[ED$Estuary == "Ngqusi/Inxaxo",157] <- 1
+ED$randlist <- as.character(ED$randlist)
+
+
+
+
+#Remove the estuaries that don't have any species 
+FishSurvey <- subset(FishSurvey, Alpha > 0)
+
+FishSurvey[,1]
+
+
+#What's the alpha diversity of each individual protected estuary? 
+ED[ED$Estuary == "Kosi",149]
